@@ -344,6 +344,7 @@ static long axidma_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
     struct axidma_transaction trans;
     struct axidma_inout_transaction inout_trans;
     struct axidma_video_transaction video_trans;
+    struct axidma_residue residue;
     struct axidma_chan chan_info;
 
     // Coerce the arguement as a userspace pointer
@@ -463,6 +464,20 @@ static long axidma_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
             }
 
             rc = axidma_video_write_transfer(dev, &video_trans);
+            break;
+
+        case AXIDMA_DMA_RESIDUE:
+            if (copy_from_user(&residue, arg_ptr, sizeof(residue)) != 0) {
+                axidma_err("Unable to copy residue info from userspace for "
+                           "AXIDMA_DMA_RESIDUE.\n");
+                return -EFAULT;
+            }
+            rc = axidma_get_residue(dev, &residue);
+            if (copy_to_user(arg_ptr, &residue, sizeof(residue)) != 0) {
+                axidma_err("Unable to copy residue info to userspace for "
+                           "AXIDMA_DMA_RESIDUE.\n");
+                return -EFAULT;
+            }
             break;
 
         case AXIDMA_STOP_DMA_CHANNEL:
