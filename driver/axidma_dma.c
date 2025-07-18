@@ -18,7 +18,7 @@
 #include <linux/errno.h>            // Linux error codes
 #include <linux/platform_device.h>  // Platform device definitions
 #include <linux/device.h>           // Device definitions and functions
-
+#include <linux/signal.h>
 /* Between 3.x and 4.x, the path to Xilinx's DMA include file changes. However,
  * in some 4.x kernels, the path is still the old one from 3.x. The macro is
  * defined by the Makefile, when specified by the user. */
@@ -142,7 +142,7 @@ static struct axidma_chan *axidma_get_chan(struct axidma_device *dev,
 static void axidma_dma_callback(void *data)
 {
     struct axidma_cb_data *cb_data;
-    struct siginfo sig_info;
+    struct kernel_siginfo sig_info;
 
     /* For synchronous transfers, notify the kernel thread waiting. For
      * asynchronous transfers, send a signal to userspace if requested. */

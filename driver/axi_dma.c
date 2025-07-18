@@ -15,7 +15,7 @@
 #include <linux/slab.h>             // Allocation functions
 #include <linux/stat.h>             // Module parameter permission values
 #include <linux/platform_device.h>  // Platform device definitions
-
+#include <linux/of_dma.h>
 // Local dependencies
 #include "axidma.h"                 // Internal definitions
 
@@ -157,3 +157,4 @@ MODULE_AUTHOR("Jared Choi");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Module to provide a userspace interface for transferring "
                    "data from the processor to the logic fabric via AXI DMA.");
+MODULE_IMPORT_NS(DMA_BUF);

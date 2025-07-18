@@ -266,14 +266,14 @@ static int axidma_mmap(struct file *file, struct vm_area_struct *vma)
     // Set the user virtual address and the size
     dma_alloc->size = vma->vm_end - vma->vm_start;
     dma_alloc->user_addr = (void *)vma->vm_start;
-    dma_alloc->device = dev->device;
+    dma_alloc->device = &dev->pdev->dev;
 
     // Configure the DMA device
-    of_dma_configure(dev->device, NULL);
+    of_dma_configure(&dev->pdev->dev, NULL, true);
 
     // Allocate the requested region a contiguous and uncached for DMA
     vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
-    dma_alloc->kern_addr = dma_alloc_coherent(dev->device, dma_alloc->size,
+    dma_alloc->kern_addr = dma_alloc_coherent(&dev->pdev->dev, dma_alloc->size,
                                               &dma_alloc->dma_addr, GFP_KERNEL);
     if (dma_alloc->kern_addr == NULL) {
         axidma_err("Unable to allocate contiguous DMA memory region of size "
@@ -285,7 +285,7 @@ static int axidma_mmap(struct file *file, struct vm_area_struct *vma)
     }
 
     // Map the region into userspace
-    rc = dma_mmap_coherent(dev->device, vma, dma_alloc->kern_addr,
+    rc = dma_mmap_coherent(&dev->pdev->dev, vma, dma_alloc->kern_addr,
                            dma_alloc->dma_addr, dma_alloc->size);
     if (rc < 0) {
         axidma_err("Unable to remap address %p to userspace address %p, size "
@@ -304,7 +304,7 @@ static int axidma_mmap(struct file *file, struct vm_area_struct *vma)
     return 0;
 
 free_dma_region:
-    dma_free_coherent(dev->device, dma_alloc->size, dma_alloc->kern_addr,
+    dma_free_coherent(&dev->pdev->dev, dma_alloc->size, dma_alloc->kern_addr,
                       dma_alloc->dma_addr);
 free_vma_data:
     kfree(dma_alloc);
@@ -317,11 +317,11 @@ ret:
 static bool axidma_access_ok(const void __user *arg, size_t size, bool readonly)
 {
     // Note that VERIFY_WRITE implies VERIFY_WRITE, so read-write is handled
-    if (!readonly && !access_ok(VERIFY_WRITE, arg, size)) {
+    if (!readonly && !access_ok(arg, size)) {
         axidma_err("Argument address %p, size %zu cannot be written to.\n",
                    arg, size);
         return false;
-    } else if (!access_ok(VERIFY_READ, arg, size)) {
+    } else if (!access_ok(arg, size)) {
         axidma_err("Argument address %p, size %zu cannot be read from.\n",
                    arg, size);
         return false;
@@ -385,7 +385,7 @@ static long axidma_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
             break;
 
         case AXIDMA_GET_DMA_CHANNELS:
-            if (copy_from_user(&usr_chans, arg_ptr, sizeof(chan_info)) != 0) {
+            if (copy_from_user(&usr_chans, arg_ptr, sizeof(usr_chans)) != 0) {
                 axidma_err("Unable to copy channel buffer address from "
                            "userspace for AXIDMA_GET_DMA_CHANNELS.\n");
                 return -EFAULT;
@@ -551,7 +551,7 @@ int axidma_chrdev_init(struct axidma_device *dev)
     }
 
     // Create a device class for our device
-    dev->dev_class = class_create(THIS_MODULE, dev->chrdev_name);
+    dev->dev_class = class_create(dev->chrdev_name);
     if (IS_ERR(dev->dev_class)) {
         axidma_err("Unable to create a device class.\n");
         rc = PTR_ERR(dev->dev_class);

@@ -96,7 +96,9 @@ static int axidma_of_parse_channel(struct device_node *dma_node, int channel,
     // Go to the child node that we're parsing
     dma_chan_node = of_get_next_child(dma_node, NULL);
     if (channel == 1) {
-        dma_chan_node = of_get_next_child(dma_node, dma_chan_node);
+        if (of_get_child_count(dma_node) > 1) {
+            dma_chan_node = of_get_next_child(dma_node, dma_chan_node);
+        }
     }
 
     // Read out the channel's unique device id, and put it in the structure
