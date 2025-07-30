@@ -10,6 +10,7 @@
  **/
 
 // Kernel dependencies
+#include <linux/version.h>
 #include <linux/delay.h>            // Milliseconds to jiffies converstion
 #include <linux/wait.h>             // Completion related functions
 #include <linux/sched.h>            // Send signal to process function
@@ -27,7 +28,9 @@
 #else
 #include <linux/amba/xilinx_dma.h>  // Xilinx DMA config structures
 #endif
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6,0,0)
+#include <linux/sched/signal.h>
+#endif
 
 // Local dependencies
 #include "axidma.h"                 // Internal definitions
