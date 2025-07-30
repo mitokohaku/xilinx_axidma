@@ -11,6 +11,7 @@
  **/
 
 // Kernel dependencies
+#include <linux/version.h>
 #include <linux/list.h>         // Linked list definitions and functions
 #include <linux/sched.h>        // `Current` global variable for current task
 #include <linux/device.h>       // Device and class creation functions
@@ -551,7 +552,11 @@ int axidma_chrdev_init(struct axidma_device *dev)
     }
 
     // Create a device class for our device
-    dev->dev_class = class_create(dev->chrdev_name);
+    #if LINUX_VERSION_CODE < KERNEL_VERSION(6,0,0)
+        dev->dev_class = class_create(THIS_MODULE, dev->chrdev_name);
+    #else
+        dev->dev_class = class_create(dev->chrdev_name);
+    #endif
     if (IS_ERR(dev->dev_class)) {
         axidma_err("Unable to create a device class.\n");
         rc = PTR_ERR(dev->dev_class);
